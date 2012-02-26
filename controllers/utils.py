@@ -1,0 +1,132 @@
+
+'''
+1. Store data as
+    {"timestamp":<>, "name":<>, "value":<>}
+
+2. Create new data points and store them along with previous data
+
+    Operations on data:
+        Standard Deviation
+        Moving Average
+        DailyChange
+        Aggregate Over a Period
+        Arithmatic operation on Params with 'i' as index
+
+
+mongo.get return [(data, ts)...]
+'''
+import json
+from datetime import datetime
+import time
+from operator import itemgetter
+import numpy as np
+from pymongo import Connection
+connection = Connection('localhost', 27017)
+DB = connection.timeseries_data
+Table = DB.DataStore
+
+
+def api():
+    t = request.vars['type']
+    return json.dumps(FuncDict[t](**request.vars))
+
+def index():
+    response.view = 'main.html'
+    return dict()
+    
+def rolling_window(a, window):
+    shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)   
+    strides = a.strides + (a.strides[-1],)
+    return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
+
+def get_params(*args, **kwargs):
+    t = Table.find_one({'type': 'params'})
+    return t and t['value'] or []
+
+def store_params(params):
+    Table.insert({'type': 'params', 'value': params})
+    
+def store(data):
+    res=[]
+    params = get_params()
+    for e in data:
+        for k,v in e.items():
+            if k=="timestamp":continue
+            if not k in params:params.append(k)
+            res.append({"timestamp":e["timestamp"], "name":k, "value":v})
+    Table.insert(res)
+    store_params(params)
+    return True
+
+def get(name, start_ts=0, num=None, **kwargs):
+    res = [[e["value"], e["timestamp"]] for e in Table.find({"name":name, "timestamp":{"$gte":start_ts}}).sort("timestamp")]
+    if num:res=res[:num]
+    return res
+
+def sd(name, *args, **kwargs):
+    d = get(name)
+    return calculate_sd_snap(d)
+
+def mean(name, *args, **kwargs):
+    d = get(name)
+    return calculate_mean_snap(d)
+
+def sd_rolling(name, step, *args, **kwargs):
+    d = get(name)
+    step = int(step)
+    return calculate_sd_rolling(d, step)
+
+def mean_rolling(name,step, *args, **kwargs):
+    d = get(name)
+    step = int(step)
+    return calculate_mean_rolling(d, step)
+
+def dailychange(name, *args, **kwargs):
+    d = get(name)
+    data, ts = [e[0] for e in d], [e[1] for e in d]
+    data = [x - data[i-1] if i else None for i, x in enumerate(data)][1:]
+    return zip(data, ts[1:])
+
+def ag_over_time(name, step, *args, **kwargs):
+    d = get(name)
+    step=int(step)
+    data, ts = [e[0] for e in d], [e[1] for e in d]
+    data = [ [sum(data[i*step: (i+1)*step]), ts[(i+1)*step-1]] for i in range(len(data)/float(step)) ]
+    return data 
+
+def calculate_mean_snap(data):
+    d, ts = [e[0] for e in data], [e[1] for e in data]
+    d = np.array(d)
+    data = [[np.mean(d[:i]), ts[i-1]] for i in range(1,len(d)+1)]
+    return data
+
+def calculate_sd_snap(data):
+    d, ts = [e[0] for e in data], [e[1] for e in data]
+    d = np.array(d)
+    data = [[np.std(d[:i]), ts[i-1]] for i in range(1,len(d)+1)]
+    return data
+
+def calculate_mean_rolling(data, step):
+    data, ts = [e[0] for e in data], [e[1] for e in data]
+    data = np.mean(rolling_window(np.array(data), step), -1)
+    data = [[val, ts[index+step-1]] for (index, val) in enumerate(data)] 
+    #data = [ [np.mean(np.array(data[i*step: (i+1)*step])), ts[(i+1)*step]] for i in range(len(data)/float(step)) ]
+    return data 
+
+def calculate_sd_rolling(data, step):
+    data, ts = [e[0] for e in data], [e[1] for e in data]
+    data = np.std(rolling_window(np.array(data), step), -1)
+    data = [[val, ts[index+step-1]] for (index, val) in enumerate(data)] 
+    #data = [ [np.std(np.array(data[i*step: (i+1)*step])), ts[(i+1)*step]] for i in range(len(data)/float(step)) ]
+    return data
+
+FuncDict = {
+    'get': get,
+    'sd': sd,
+    'mean': mean,
+    'sd_rolling': sd_rolling,
+    'mean_rolling': mean_rolling,
+    'dailychange': dailychange,
+    'ag_over_time': ag_over_time,
+    'get_params': get_params,
+}
