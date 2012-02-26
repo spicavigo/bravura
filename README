@@ -1,0 +1,29 @@
+Bravura
+
+Requirements:
+  1. MongoDB
+  2. Numpy
+  3. Web2py
+
+Bravura is time-series data visualization tool. It provides methods to store the data and perform various operations on it.
+Operations currently supported are Standard Deviation, Mean, Rolling Mean, Aggregate, and Daily Change.
+
+This is the first draft and I plan to improve it slowly.
+
+Though I have mentioned that Bravura requires Web2py, you may use any other python server that you want. Files of importance in Bravura are
+
+1. views/main.html
+2. static/css/button.css
+3. static/css/main.css
+4. static/js/jquery.js
+5. static/js/isotope.js
+6. static/js/prototype.js
+7. static/js/excanvas.js
+8. static/js/lib/base64.js
+9. static/js/canvas2image.js
+10. static/js/canvastext.js
+11. static/js/flotr.js
+12. static/js/main.js
+13. controllers/bravura.py
+
+static/js/myscript.js shows how to instantiate Bravura
