@@ -27,3 +27,21 @@ Though I have mentioned that Bravura requires Web2py, you may use any other pyth
 13. controllers/bravura.py
 
 static/js/myscript.js shows how to instantiate Bravura
+
+How to Run
+
+Get web2py and put bravura inside the application folder
+
+cd to bravura/controllers folder
+open python shell
+
+>>> from bravura import store
+>>> data = [.... YOUR DATA ...]
+>>> store(data)
+
+YOUR DATA is a list of dictionaries where each dictionary contains "timestamp" along with data of other parameters
+eg. {"timestamp": time.mktime(datetime(2012,1,1).timetuple()), "PARAM_A": <VALUE_A>, "PARAM_B":<VALUE_B>, ....}
+
+Now that you are finished with loading data, start your web2py server and browse to http://127.0.0.1:8000/bravura/utils/index
+
+If everything worked, then you should see the graphs for your data now.
