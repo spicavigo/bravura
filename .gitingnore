@@ -1,5 +1,6 @@
 *.py[co]
-
+*.pyc
+*.pyo
 # Packages
 *.egg
 *.egg-info
@@ -12,7 +13,7 @@ var
 sdist
 develop-eggs
 .installed.cfg
-
+errors
 # Installer logs
 pip-log.txt
 

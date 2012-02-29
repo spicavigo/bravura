@@ -1,5 +1,7 @@
 (function(window, $, jQuery, undefined) {
-    function bravura(selector, labels) {
+    function bravura(selector, labels, opts) {
+        labels = labels || {};
+        opts = opts || {};
         var Data = {};
         var MainLabel = {};
         var Label = {
@@ -82,6 +84,8 @@
             mydate.setTime(inputTimeStamp*1000);
             return zeroPad(mydate.getDate(),2) + '/' + zeroPad(mydate.getMonth()+1,2);
         };
+        console.log(opts);
+        if (opts.dateformatter) myDateFormater = opts.dateformatter;
         var plot = function (name, opt){
             var res = [];
             for (var i in Data[name]){
@@ -177,29 +181,63 @@
                 }
             });
         };
-        var add_items = function (){
-            for (var i=0; i<PARAMS.length; i++){
-                Data[PARAMS[i]] = {};
-                ViewableSeries[PARAMS[i]] = {}
-                jQuery(selector).append('<div class="item">' + '<div class="graph-title">' + labels[PARAMS[i]] + '</div>' + buttonHTML + '<div class="graph" id="'+PARAMS[i] + '"></div>');
-                //get_var(PARAMS[i]);
-                bind_buttons(PARAMS[i]);
+        var add_item = function(index){
+            Data[PARAMS[index]] = {};
+            ViewableSeries[PARAMS[index]] = {}
+            label = labels[PARAMS[index]] || PARAMS[index];
+            var $html = jQuery('<div class="item item-' + index + '">' + '<div class="graph-title">' + label + '</div>' + buttonHTML + '<div class="graph" id="'+PARAMS[index] + '"></div>');
+            try{
+                jQuery(selector).append($html).isotope( 'insert', $html );
+            } catch (e){
                 
             }
-            jQuery(selector).isotope({
-                itemSelector:'.item', 
-                masonry:{
-                    columnWidth:30
-                    }
-            });
-            jQuery(selector).delegate( '.item .togglesize', 'click', function(){
+                //get_var(PARAMS[i]);
+            bind_buttons(PARAMS[index]);
+            
+            jQuery(selector).delegate( '.item.item-' + index + ' .togglesize', 'click', function(){
                 jQuery(this).parent().toggleClass('large');
                 jQuery(this).toggleClass('blue');
                 jQuery(this).toggleClass('white');
                 jQuery(selector).isotope('reLayout');        
                 plot(jQuery(this).parent().find('.graph').attr('id'));
               });
-              jQuery('.raw').trigger('click');
+            //jQuery('.item.item-' + index +  ' .raw').trigger('click');
+        }
+        this.add_item = add_item;
+        var remove_item = function(index){
+            jQuery(selector).isotope( 'remove', jQuery('.item.item-' + index) );
+        }
+        var add_items = function (){
+            var html = '';
+            for(var i=0; i<PARAMS.length; i++){
+                html += '<div class="fl graphmenu white small" data-id="'+ i + '">' + PARAMS[i] + '</div>'
+            }
+            html += '<div class="clear"></div>';
+            jQuery(html).insertAfter('#header');
+            jQuery('.graphmenu').bind('click', function(){
+                jQuery(this).toggleClass('blue');
+                jQuery(this).toggleClass('white');
+                var dataid = jQuery(this).attr('data-id');
+                if (jQuery('.item.item-' + dataid).length)
+                    remove_item(parseInt(dataid));
+                else
+                    add_item(parseInt(dataid));
+            });
+            //add_item(0);
+            jQuery(selector).isotope({
+                itemSelector:'.item', 
+                masonry:{
+                    columnWidth:30
+                    }
+            });
+            /*jQuery(selector).delegate( '.item .togglesize', 'click', function(){
+                jQuery(this).parent().toggleClass('large');
+                jQuery(this).toggleClass('blue');
+                jQuery(this).toggleClass('white');
+                jQuery(selector).isotope('reLayout');        
+                plot(jQuery(this).parent().find('.graph').attr('id'));
+              });
+            jQuery('.raw').trigger('click');*/
         };
         var display_dashboard = function (){
             add_items();
@@ -209,7 +247,7 @@
             get_params(display_dashboard);
         };
     }
-    window.bravura = function(selector, labels) {
-         return new bravura(selector, labels);
+    window.bravura = function(selector, labels, opts) {
+         return new bravura(selector, labels, opts);
     };
 }(window, $, jQuery));

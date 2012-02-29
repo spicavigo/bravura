@@ -12,8 +12,6 @@
         Aggregate Over a Period
         Arithmatic operation on Params with 'i' as index
 
-
-mongo.get return [(data, ts)...]
 '''
 import json
 from datetime import datetime
@@ -51,6 +49,7 @@ def store(data):
     params = get_params()
     for e in data:
         for k,v in e.items():
+            k = k.replace('/', '_')
             if k=="timestamp":continue
             if not k in params:params.append(k)
             res.append({"timestamp":e["timestamp"], "name":k, "value":v})
