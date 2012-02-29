@@ -39,18 +39,30 @@
                 jQuery(this).toggleClass('white');
             });
             jQuery(container).find('.sd_rolling').bind('click', function(){
-                if (ViewableSeries[name]['sd_rolling'] == undefined) get_var(name, "sd_rolling", {step:3});
+                var step = jQuery(this).parent('.item').attr('rstd');
+                if (ViewableSeries[name]['sd_rolling'] == undefined) get_var(name, "sd_rolling", {step:step});
                 else if (ViewableSeries[name]['sd_rolling'] == 0) add_series(name, "sd_rolling");
-                else remove_series(name, "sd_rolling");
-                jQuery(this).toggleClass('blue');
-                jQuery(this).toggleClass('white');
+                else {
+                    jQuery(this).removeClass('blue');
+                    jQuery(this).addClass('white');
+                    remove_series(name, "sd_rolling");
+                    return;
+                }
+                jQuery(this).addClass('blue');
+                jQuery(this).removeClass('white');
             });
             jQuery(container).find('.mean_rolling').bind('click', function(){
-                if (ViewableSeries[name]['mean_rolling'] == undefined) get_var(name, "mean_rolling", {step:3});
+                var step = jQuery(this).parent('.item').attr('rmean');
+                if (ViewableSeries[name]['mean_rolling'] == undefined) get_var(name, "mean_rolling", {step:step});
                 else if (ViewableSeries[name]['mean_rolling'] == 0) add_series(name, "mean_rolling");
-                else remove_series(name, "mean_rolling");
-                jQuery(this).toggleClass('blue');
-                jQuery(this).toggleClass('white');
+                else {
+                    jQuery(this).removeClass('blue');
+                    jQuery(this).addClass('white');
+                    remove_series(name, "mean_rolling");
+                    return;
+                }
+                jQuery(this).addClass('blue');
+                jQuery(this).removeClass('white');
             });
             jQuery(container).find('.dailychange').bind('click', function(){
                 if (ViewableSeries[name]['dailychange'] == undefined) get_var(name, "dailychange");
@@ -84,7 +96,7 @@
             mydate.setTime(inputTimeStamp*1000);
             return zeroPad(mydate.getDate(),2) + '/' + zeroPad(mydate.getMonth()+1,2);
         };
-        console.log(opts);
+
         if (opts.dateformatter) myDateFormater = opts.dateformatter;
         var plot = function (name, opt){
             var res = [];
@@ -185,7 +197,7 @@
             Data[PARAMS[index]] = {};
             ViewableSeries[PARAMS[index]] = {}
             label = labels[PARAMS[index]] || PARAMS[index];
-            var $html = jQuery('<div class="item item-' + index + '">' + '<div class="graph-title">' + label + '</div>' + buttonHTML + '<div class="graph" id="'+PARAMS[index] + '"></div>');
+            var $html = jQuery('<div class="item item-' + index + '" rmean="3" rstd="3">' + '<div class="graph-title">' + label + '</div><div class="graphsetting"><img src="../static/images/graph_settings.png"/></div>' + buttonHTML + '<div class="graph" id="'+PARAMS[index] + '"></div>');
             try{
                 jQuery(selector).append($html).isotope( 'insert', $html );
             } catch (e){
@@ -194,6 +206,43 @@
                 //get_var(PARAMS[i]);
             bind_buttons(PARAMS[index]);
             
+            jQuery('.item.item-'+index+' .graphsetting').bind('click', {'index': index}, function(e){
+                var dataid = jQuery('.tooltip').attr('data-id');
+                var name = jQuery('.item.item-'+e.data.index+' .graph').attr('id');
+                ViewableSeries[name]['mean_rolling'] = undefined;
+                ViewableSeries[name]['sd_rolling'] = undefined;
+                if (dataid == e.data.index) {
+                    
+                    jQuery('.tooltip').addClass('hidden');
+                    jQuery('.tooltip').attr('data-id', '-1');
+                    var rmean = jQuery('#rolling_mean').val();
+                    var rstd = jQuery('#rolling_sd').val();
+                    if (!(rmean == parseInt(rmean,10))) rmean = 3;
+                    if (!(rstd == parseInt(rstd,10))) rstd = 3;
+                    jQuery(this).parent('.item').attr('rmean', rmean);
+                    jQuery(this).parent('.item').attr('rstd', rstd);
+                    return;
+                } else {
+                    if (parseInt(dataid) > -1){
+                        var rmean = jQuery('#rolling_mean').val();
+                        var rstd = jQuery('#rolling_sd').val();
+                        if (!(rmean == parseInt(rmean,10))) rmean = 3;
+                        if (!(rstd == parseInt(rstd,10))) rstd = 3;
+                        jQuery('.item.item-'+dataid).attr('rmean', rmean);
+                        jQuery('.item.item-'+dataid).attr('rstd', rstd);
+                    }
+                    
+                }
+                var rmean = jQuery(this).parent('.item').attr('rmean');
+                var rstd = jQuery(this).parent('.item').attr('rstd');
+                jQuery('#rolling_sd').val(rstd);
+                jQuery('#rolling_mean').val(rmean);
+                jQuery('.tooltip').attr('data-id', e.data.index);
+                jQuery('.tooltip').css('position', 'absolute');
+                var offset = jQuery(this).offset();
+                jQuery('.tooltip').css('top', offset.top + 30);
+                jQuery('.tooltip').css('left', offset.left - 50).removeClass('hidden');
+            })
             jQuery(selector).delegate( '.item.item-' + index + ' .togglesize', 'click', function(){
                 jQuery(this).parent().toggleClass('large');
                 jQuery(this).toggleClass('blue');
