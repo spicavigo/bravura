@@ -42,6 +42,6 @@ open python shell
 YOUR DATA is a list of dictionaries where each dictionary contains "timestamp" along with data of other parameters
 eg. {"timestamp": time.mktime(datetime(2012,1,1).timetuple()), "PARAM_A": <VALUE_A>, "PARAM_B":<VALUE_B>, ....}
 
-Now that you are finished with loading data, start your web2py server and browse to http://127.0.0.1:8000/bravura/utils/index
+Now that you are finished with loading data, start your web2py server and browse to http://127.0.0.1:8000/bravura/bravura/index
 
 If everything worked, then you should see the graphs for your data now.

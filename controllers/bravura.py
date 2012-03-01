@@ -62,6 +62,19 @@ def get(name, start_ts=0, num=None, **kwargs):
     if num:res=res[:num]
     return res
 
+def frequency_distribution(name, bins=0, *args, **kwargs):
+    d = [e[0] for e in get(name)]
+    npd = np.array(d)
+    if not bins:
+        bins = npd.max()*4.0
+    res = np.histogram(npd, bins=bins)
+    data = filter(lambda x: x[0] > 0, zip(list(res[0]), list(res[1][1:])))
+    s=[[e[1]]*e[0] for e in data]
+    s=[item for sublist in s for item in sublist]
+    
+    percentiles = [[np.percentile(s, e), e] for e in [25, 50, 90, 95, 99]]
+    return [data, percentiles]
+        
 def sd(name, *args, **kwargs):
     d = get(name)
     return calculate_sd_snap(d)
@@ -119,6 +132,7 @@ def calculate_sd_rolling(data, step):
     #data = [ [np.std(np.array(data[i*step: (i+1)*step])), ts[(i+1)*step]] for i in range(len(data)/float(step)) ]
     return data
 
+
 FuncDict = {
     'get': get,
     'sd': sd,
@@ -128,4 +142,5 @@ FuncDict = {
     'dailychange': dailychange,
     'ag_over_time': ag_over_time,
     'get_params': get_params,
+    'frequency': frequency_distribution
 }

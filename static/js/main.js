@@ -11,10 +11,11 @@
             "sd_rolling": "SD Rolling (x day)",
             "mean_rolling": "Mean Rolling (x day)",
             "dailychange": "Daily Change",
-            "ag_over_time": "Weekly Aggregate"
+            "ag_over_time": "Weekly Aggregate",
+            "frequency": "Frequency"
         };
         var ViewableSeries = {};
-        var buttonHTML = '<div class="fl togglesize white small">Expand</div><div class="fl raw white small">Raw Data</div><div class="fl sd white small">SD</div><div class="fl mean white small">Mean</div><div class="fl sd_rolling white small">SD Rolling</div><div class="fl mean_rolling white small">Mean Rolling</div><div class="fl dailychange white small">Daily Change</div><div class="fl ag_over_time_7 white small">7 day Aggr</div><div class="clear"></div>'
+        var buttonHTML = '<div class="fl togglesize white small">Expand</div><div class="fl raw white small">Raw Data</div><div class="fl sd white small">SD</div><div class="fl mean white small">Mean</div><div class="fl sd_rolling white small">SD Rolling</div><div class="fl mean_rolling white small">Mean Rolling</div><div class="fl dailychange white small">Daily Change</div><div class="fl ag_over_time_7 white small">7 day Aggr</div><div class="fl frequency white small">Frequency</div><div class="clear"></div>'
         var bind_buttons = function (name){
             var container = jQuery('#'+name).parent();
             jQuery(container).find('.raw').bind('click', function(){
@@ -78,10 +79,17 @@
                 jQuery(this).toggleClass('blue');
                 jQuery(this).toggleClass('white');
             });
+            jQuery(container).find('.frequency').bind('click', function(){
+                if (ViewableSeries[name]['frequency'] == undefined) get_var(name, "frequency");
+                else if (ViewableSeries[name]['frequency'] == 0) add_series(name, "frequency");
+                else remove_series(name, "frequency");
+                jQuery(this).toggleClass('blue');
+                jQuery(this).toggleClass('white');
+            });
             $(name).observe('flotr:select', function(evt){
 		        var area = evt.memo[0];
 		        plot(name, {
-			        xaxis: {min:area.x1, max:area.x2, tickFormatter: myDateFormater},
+			        xaxis: {min:area.x1, max:area.x2},
 			        yaxis: {min:area.y1, max:area.y2}
 		        });
 
@@ -105,7 +113,16 @@
                     res.push({data:Data[name][i], label:Label[i], mouse:{track: true}});
                 }
             }
-            opt = opt || {xaxis:{
+            if (ViewableSeries[name]['frequency'] == 1 && res.length == 1){
+                opt = opt || {};
+                for (var i=0; i<Data[name]['percentiles'].length; i++){
+                    d = Data[name]['percentiles'][i];
+                    res.push({data:[[d[0], 100]], label: d[1] + 'th Percentile',
+                        bars:{show:true, barWidth:0.1}, points:{show:false}});
+                }
+            }
+            else
+                opt = opt || {xaxis:{
 			                    tickFormatter: myDateFormater
 			                }};
             opt = jQuery.extend(opt, {
@@ -141,7 +158,7 @@
                             mouse: {
 	                            track: true,		// => true to track the mouse, no tracking otherwise
 	                            color: 'purple',
-		                        sensibility: 1, // => distance to show point get's smaller
+		                        sensibility: 100, // => distance to show point get's smaller
 		                        trackDecimals: 2,
 		                        trackFormatter: function(obj){ return 'x = ' + obj.x +', y = ' + obj.y; }
 
@@ -174,6 +191,10 @@
                 success: function(data){
                     data = eval(data);
                     
+                    if (type == 'frequency'){
+                        Data[name]['percentiles'] = data[1];
+                        data = data[0];
+                    }
                     var res=[];
                     for (var i=0; i<data.length; i++) res.push([data[i][1], data[i][0]]);
                     Data[name][type]=res;

@@ -7,6 +7,7 @@ jQuery(function(){
         'dateformatter': function(input) {
             mydate = new Date();
             mydate.setTime(input*1000);
+            //return input;
             return zeroPad(mydate.getHours(),2) + ':' + zeroPad(mydate.getMinutes(),2);
         }
     });
