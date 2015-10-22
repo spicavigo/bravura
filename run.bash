@@ -1,3 +1,3 @@
-echo "asd" > data.txt
+echo "ad" > data.txt
 
 echo "FauzanYousuf" > data.txt
